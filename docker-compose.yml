@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15
+    container_name: data_analysis_postgres
+    environment:
+      POSTGRES_DB: data_analysis
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - data_analysis_network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: data_analysis_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - data_analysis_network
+
+  # 后端API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: data_analysis_backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/data_analysis
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=your-secret-key-change-in-production
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    networks:
+      - data_analysis_network
+
+  # 前端应用
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: data_analysis_frontend
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - data_analysis_network
+
+volumes:
+  postgres_data:
+  backend_uploads:
+
+networks:
+  data_analysis_network:
+    driver: bridge 
