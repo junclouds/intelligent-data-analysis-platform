@@ -18,30 +18,46 @@ class DataProcessor:
     
     async def save_uploaded_file(self, file: UploadFile) -> str:
         """保存上传的文件"""
-        # 验证文件类型
-        file_ext = Path(file.filename).suffix.lower()
-        if file_ext not in settings.ALLOWED_FILE_TYPES:
-            raise HTTPException(
-                status_code=400,
-                detail=f"不支持的文件类型: {file_ext}"
-            )
-        
-        # 生成唯一文件名
-        import uuid
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_path = self.upload_dir / unique_filename
-        
-        # 保存文件
-        async with aiofiles.open(file_path, 'wb') as f:
+        try:
+            # 验证文件类型
+            file_ext = Path(file.filename).suffix.lower()
+            if file_ext not in settings.ALLOWED_FILE_TYPES:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"不支持的文件类型: {file_ext}，请上传 {', '.join(settings.ALLOWED_FILE_TYPES)} 格式的文件"
+                )
+            
+            # 确保上传目录存在
+            self.upload_dir.mkdir(exist_ok=True)
+            
+            # 生成唯一文件名
+            import uuid
+            unique_filename = f"{uuid.uuid4()}{file_ext}"
+            file_path = self.upload_dir / unique_filename
+            
+            # 读取文件内容
             content = await file.read()
+            
+            # 验证文件大小
             if len(content) > settings.MAX_FILE_SIZE:
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"文件大小超过限制: {settings.MAX_FILE_SIZE / 1024 / 1024}MB"
+                    status_code=422,
+                    detail=f"文件大小超过限制: {len(content) / 1024 / 1024:.1f}MB > {settings.MAX_FILE_SIZE / 1024 / 1024}MB"
                 )
-            await f.write(content)
-        
-        return str(file_path)
+            
+            # 保存文件
+            async with aiofiles.open(file_path, 'wb') as f:
+                await f.write(content)
+            
+            return str(file_path)
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"文件保存失败: {str(e)}"
+            )
     
     def load_data(self, file_path: str) -> pd.DataFrame:
         """加载数据文件"""

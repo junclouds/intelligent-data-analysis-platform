@@ -1,14 +1,13 @@
 export interface Dataset {
   id: number;
   name: string;
+  file_path: string;
+  row_count: number;
+  columns: string[];
+  created_at: string;
+  updated_at: string;
   description?: string;
   file_type: string;
-  file_size: number;
-  row_count: number;
-  column_count?: number;
-  columns?: Column[];
-  created_at: string;
-  updated_at?: string;
 }
 
 export interface Column {
@@ -39,7 +38,7 @@ export interface AnalysisResult {
 }
 
 export interface ChartConfig {
-  chart_type: 'line' | 'bar' | 'pie' | 'scatter' | 'histogram';
+  chart_type: 'line' | 'bar' | 'pie' | 'scatter';
   data: any[];
   x_axis?: string;
   y_axis?: string;
@@ -48,7 +47,6 @@ export interface ChartConfig {
 }
 
 export interface Insight {
-  type: 'trend' | 'pattern' | 'anomaly' | 'recommendation';
   title: string;
   description: string;
   importance: 'high' | 'medium' | 'low';
@@ -57,10 +55,5 @@ export interface Insight {
 export interface UploadResponse {
   id: number;
   name: string;
-  file_type: string;
-  file_size: number;
-  row_count: number;
-  column_count: number;
-  columns: Column[];
   message: string;
 } 

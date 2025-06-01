@@ -58,7 +58,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess, onUploadError 
       onUploadSuccess(result);
       setUploadedFiles(prev => prev.filter(f => f !== file));
     } catch (error: any) {
-      onUploadError(error.response?.data?.detail || '上传失败');
+      console.error('文件上传错误:', error);
+      const errorMessage = error.response?.data?.detail || 
+                         error.response?.data?.message || 
+                         error.message || 
+                         '上传失败，请重试';
+      onUploadError(errorMessage);
     } finally {
       setIsUploading(false);
     }
