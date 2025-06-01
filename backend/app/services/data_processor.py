@@ -150,16 +150,17 @@ class DataProcessor:
     def query_data(self, df: pd.DataFrame, query_config: Dict[str, Any]) -> Dict[str, Any]:
         """根据查询配置处理数据"""
         try:
-            query_type = query_config.get("type", "basic")
+            query_type = query_config.get("query_type", "basic")
+            parameters = query_config.get("parameters", {})
             
             if query_type == "trend":
-                return self._analyze_trend(df, query_config)
+                return self._analyze_trend(df, parameters)
             elif query_type == "comparison":
-                return self._analyze_comparison(df, query_config)
+                return self._analyze_comparison(df, parameters)
             elif query_type == "distribution":
-                return self._analyze_distribution(df, query_config)
+                return self._analyze_distribution(df, parameters)
             else:
-                return self._basic_analysis(df, query_config)
+                return self._basic_analysis(df, parameters)
         
         except Exception as e:
             raise HTTPException(

@@ -167,7 +167,7 @@ class AIAnalyzer:
             
             # 寻找分类列
             for col in columns:
-                if col['unique_count'] < len(data_info.get('row_count', 0)) * 0.5:  # 唯一值较少的列
+                if col['unique_count'] < data_info.get('row_count', 0) * 0.5:  # 唯一值较少的列
                     category_col = col['name']
                     break
             

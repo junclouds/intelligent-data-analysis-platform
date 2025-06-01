@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 from pydantic import BaseModel
+import os
 
 from app.core.database import get_db
 from app.models.dataset import Dataset
@@ -25,30 +26,43 @@ async def analyze_data(
 ):
     """分析数据并生成图表和洞察"""
     try:
-        # 获取数据集
-        dataset = db.query(Dataset).filter(
-            Dataset.id == request.dataset_id,
-            Dataset.is_active == True
-        ).first()
-        
-        if not dataset:
-            raise HTTPException(status_code=404, detail="数据集不存在")
-        
-        # 检查缓存
-        cache_key = f"analysis:{request.dataset_id}:{hash(request.question)}"
-        cached_result = await cache.get(cache_key)
-        if cached_result:
-            return cached_result
-        
-        # 加载数据
-        df = data_processor.load_data(dataset.file_path)
-        
-        # 获取数据信息
-        data_info = await cache.get(f"dataset:{request.dataset_id}:info")
-        if not data_info:
+        # 处理模拟数据集
+        if request.dataset_id == 999:
+            # 使用本地CSV文件
+            csv_path = "uploads/9bdfa9d8-39f3-4428-8b23-a510d4c68179.csv"
+            if not os.path.exists(csv_path):
+                raise HTTPException(status_code=404, detail="演示数据文件不存在")
+            
+            # 加载数据
+            df = data_processor.load_data(csv_path)
+            
+            # 获取数据信息
             data_info = data_processor.analyze_dataframe(df)
-            await cache.set(f"dataset:{request.dataset_id}:info", data_info, expire=3600)
-        
+        else:
+            # 获取数据集
+            dataset = db.query(Dataset).filter(
+                Dataset.id == request.dataset_id,
+                Dataset.is_active == True
+            ).first()
+            
+            if not dataset:
+                raise HTTPException(status_code=404, detail="数据集不存在")
+            
+            # 检查缓存
+            cache_key = f"analysis:{request.dataset_id}:{hash(request.question)}"
+            cached_result = await cache.get(cache_key)
+            if cached_result:
+                return cached_result
+            
+            # 加载数据
+            df = data_processor.load_data(dataset.file_path)
+            
+            # 获取数据信息
+            data_info = await cache.get(f"dataset:{request.dataset_id}:info")
+            if not data_info:
+                data_info = data_processor.analyze_dataframe(df)
+                await cache.set(f"dataset:{request.dataset_id}:info", data_info, expire=3600)
+
         # AI分析问题
         query_analysis = await ai_analyzer.analyze_question(request.question, data_info)
         
@@ -62,31 +76,37 @@ async def analyze_data(
             data_info
         )
         
-        # 保存分析记录
-        analysis = Analysis(
-            dataset_id=request.dataset_id,
-            question=request.question,
-            query_type=query_analysis.get("query_type"),
-            chart_config=chart_data,
-            insights={"insights": insights}
-        )
-        
-        db.add(analysis)
-        db.commit()
-        db.refresh(analysis)
+        # 对于模拟数据集，不保存分析记录
+        if request.dataset_id != 999:
+            # 保存分析记录
+            analysis = Analysis(
+                dataset_id=request.dataset_id,
+                question=request.question,
+                query_type=query_analysis.get("query_type"),
+                chart_config=chart_data,
+                insights={"insights": insights}
+            )
+            
+            db.add(analysis)
+            db.commit()
+            db.refresh(analysis)
+            analysis_id = analysis.id
+        else:
+            analysis_id = 999  # 模拟ID
         
         result = {
-            "analysis_id": analysis.id,
+            "analysis_id": analysis_id,
             "question": request.question,
             "query_type": query_analysis.get("query_type"),
             "chart_config": chart_data,
             "insights": insights,
             "reasoning": query_analysis.get("reasoning", ""),
-            "created_at": analysis.created_at.isoformat()
+            "created_at": "2025-01-19T00:00:00"  # 模拟时间
         }
         
-        # 缓存结果
-        await cache.set(cache_key, result, expire=1800)  # 30分钟缓存
+        # 对于真实数据集缓存结果
+        if request.dataset_id != 999:
+            await cache.set(cache_key, result, expire=1800)  # 30分钟缓存
         
         return result
     
