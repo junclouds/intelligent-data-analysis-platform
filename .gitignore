@@ -43,3 +43,4 @@ htmlcov/
 *.temp
 .cache/ 
 backend/uploads/
+backend/data_analysis.db
