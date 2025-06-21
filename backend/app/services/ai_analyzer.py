@@ -79,6 +79,8 @@ class AIAnalyzer:
         ])
         
         prompt = f"""
+请根据用户提出的问题和数据集结构，判断适合的分析类型、所需字段及推荐图表类型。
+
 用户问题: "{question}"
 
 数据集信息:
@@ -87,18 +89,24 @@ class AIAnalyzer:
 - 列信息:
 {columns_info}
 
-请分析用户问题，确定最适合的分析类型和参数。返回JSON格式，包含:
+请返回以下格式的 JSON 对象：
+
 {{
-    "query_type": "trend|comparison|distribution|basic",
+    "query_type": "trend|comparison|distribution|correlation|ranking|proportion|stat_summary|basic|other",
     "parameters": {{
-        "time_column": "时间列名(如果是趋势分析)",
-        "value_column": "数值列名",
-        "category_column": "分类列名(如果是对比分析)",
-        "column": "目标列名(如果是分布分析)"
+        "time_column": "时间列名（用于趋势分析）",
+        "value_column": "数值列名（如销售额、数量等）",
+        "category_column": "分类列名（如产品、地区等，用于比较分析）",
+        "column": "目标列名（用于分布、统计摘要等）"
     }},
-    "chart_suggestion": "line|bar|pie|scatter|histogram",
-    "reasoning": "选择理由"
+    "chart_suggestion": "line|bar|pie|scatter|histogram|boxplot|table",
+    "reasoning": "说明为何选择此分析类型和图表类型"
 }}
+
+说明：
+- 若用户问题无法判断分析意图或意图不明确，请将 query_type 设为 "other"，chart_suggestion 默认设为 "table"，以表格展示数据。
+- 可根据列名中是否包含时间特征、数值特征或分类字段辅助判断。
+- reasoning 字段中请解释推理过程，体现字段用途与图表匹配关系。
 """
         return prompt
     

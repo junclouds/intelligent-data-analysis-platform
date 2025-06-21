@@ -83,8 +83,10 @@ async def analyze_data(
                 dataset_id=request.dataset_id,
                 question=request.question,
                 query_type=query_analysis.get("query_type"),
+                parameters=query_analysis.get("parameters", {}),
                 chart_config=chart_data,
-                insights={"insights": insights}
+                insights={"insights": insights},
+                reasoning=query_analysis.get("reasoning", "")
             )
             
             db.add(analysis)
@@ -98,6 +100,7 @@ async def analyze_data(
             "analysis_id": analysis_id,
             "question": request.question,
             "query_type": query_analysis.get("query_type"),
+            "parameters": query_analysis.get("parameters", {}),
             "chart_config": {
                 "chart_type": chart_data.get("chart_type", "bar"),  # 使用数据处理器返回的图表类型
                 "data": chart_data.get("data", []),

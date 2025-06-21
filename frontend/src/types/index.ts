@@ -1,13 +1,15 @@
 export interface Dataset {
   id: number;
   name: string;
+  description?: string;
   file_path: string;
+  file_type: string;
+  file_size: number;
+  columns_info: Record<string, any>;
   row_count: number;
-  columns: string[];
+  is_active: boolean;
   created_at: string;
   updated_at: string;
-  description?: string;
-  file_type: string;
 }
 
 export interface Column {
@@ -27,23 +29,41 @@ export interface AnalysisRequest {
   question: string;
 }
 
+export interface AnalysisParameters {
+  time_column?: string;
+  value_column?: string;
+  category_column?: string;
+  column?: string;
+}
+
 export interface AnalysisResult {
-  analysis_id: number;
+  id: number;
+  dataset_id: number;
   question: string;
-  query_type: string;
+  query_type: 'trend' | 'comparison' | 'distribution' | 'correlation' | 'ranking' | 'proportion' | 'stat_summary' | 'basic' | 'other';
+  parameters: AnalysisParameters;
   chart_config: ChartConfig;
   insights: Insight[];
   reasoning: string;
   created_at: string;
 }
 
+export interface BoxplotData {
+  boxData: number[];
+  outliers: number[];
+  name?: string;
+}
+
 export interface ChartConfig {
-  chart_type: 'line' | 'bar' | 'pie' | 'scatter';
+  chart_type: 'line' | 'bar' | 'pie' | 'scatter' | 'histogram' | 'boxplot' | 'table';
   data: any[];
   x_axis?: string;
   y_axis?: string;
   name_field?: string;
   value_field?: string;
+  category_column?: string;
+  title?: string;
+  subtitle?: string;
 }
 
 export interface Insight {
@@ -53,7 +73,6 @@ export interface Insight {
 }
 
 export interface UploadResponse {
-  id: number;
-  name: string;
+  dataset: Dataset;
   message: string;
 } 

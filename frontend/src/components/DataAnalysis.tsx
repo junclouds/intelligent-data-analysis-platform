@@ -153,7 +153,7 @@ const DataAnalysis: React.FC<DataAnalysisProps> = ({ dataset }) => {
           </div>
           <div className="text-sm text-gray-600">
             <span className="mr-4">📊 {dataset.row_count} 行</span>
-            <span>📋 {dataset.columns?.length || 0} 列</span>
+            <span>📋 {Object.keys(dataset.columns_info || {}).length} 列</span>
           </div>
         </div>
         
@@ -212,6 +212,67 @@ const DataAnalysis: React.FC<DataAnalysisProps> = ({ dataset }) => {
       {/* 分析结果 */}
       {analysisResult && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 分析类型和推理过程 */}
+          <div className="glass-card-solid p-6">
+            <h4 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+              <Brain className="w-5 h-5 mr-2 text-primary-500" />
+              分析方法
+            </h4>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="mb-3">
+                  <span className="font-semibold text-gray-700">分析类型：</span>
+                  <span className="ml-2 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm">
+                    {(() => {
+                      switch (analysisResult.query_type) {
+                        case 'trend': return '趋势分析';
+                        case 'comparison': return '对比分析';
+                        case 'distribution': return '分布分析';
+                        case 'correlation': return '相关性分析';
+                        case 'ranking': return '排名分析';
+                        case 'proportion': return '占比分析';
+                        case 'stat_summary': return '统计摘要';
+                        case 'basic': return '基础分析';
+                        default: return '其他分析';
+                      }
+                    })()}
+                  </span>
+                </div>
+                <div className="mb-3">
+                  <span className="font-semibold text-gray-700">使用字段：</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {analysisResult.parameters?.time_column && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                        时间：{analysisResult.parameters.time_column}
+                      </span>
+                    )}
+                    {analysisResult.parameters?.value_column && (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                        数值：{analysisResult.parameters.value_column}
+                      </span>
+                    )}
+                    {analysisResult.parameters?.category_column && (
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">
+                        分类：{analysisResult.parameters.category_column}
+                      </span>
+                    )}
+                    {analysisResult.parameters?.column && (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                        目标列：{analysisResult.parameters.column}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">分析推理：</span>
+                  <p className="mt-2 text-gray-600 text-sm leading-relaxed">
+                    {analysisResult.reasoning || '暂无分析推理说明'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 图表区域 */}
           <div className="glass-card-solid p-6">
             <h4 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
@@ -222,12 +283,12 @@ const DataAnalysis: React.FC<DataAnalysisProps> = ({ dataset }) => {
           </div>
 
           {/* 洞察区域 */}
-          <div className="glass-card-solid p-6">
+          <div className="glass-card-solid p-6 lg:col-span-2">
             <h4 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
               <TrendingUp className="w-5 h-5 mr-2 text-primary-500" />
               智能洞察
             </h4>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {analysisResult.insights.map((insight, index) => (
                 <div
                   key={index}
