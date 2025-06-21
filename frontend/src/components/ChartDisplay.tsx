@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import type { ChartConfig } from '../types/index';
 import * as echarts from 'echarts';
 
@@ -10,35 +10,52 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ chartConfig }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
-  useEffect(() => {
+  // 初始化或更新图表的函数
+  const initOrUpdateChart = useCallback(() => {
     if (!chartRef.current || !chartConfig) return;
 
-    // 初始化图表
-    if (!chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current);
+    try {
+      // 如果实例不存在，创建新实例
+      if (!chartInstance.current) {
+        console.log('Creating new chart instance');
+        chartInstance.current = echarts.init(chartRef.current);
+      }
+
+      // 生成并设置图表配置
+      const option = generateChartOption(chartConfig);
+      console.log('Setting chart option:', option);
+      chartInstance.current.setOption(option, true);
+
+    } catch (error) {
+      console.error('Error in chart initialization/update:', error);
     }
-
-    // 根据图表类型生成配置
-    const option = generateChartOption(chartConfig);
-    chartInstance.current.setOption(option, true);
-
-    // 响应式处理
-    const handleResize = () => {
-      chartInstance.current?.resize();
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
   }, [chartConfig]);
 
-  useEffect(() => {
-    return () => {
-      chartInstance.current?.dispose();
-    };
+  // 处理窗口大小变化
+  const handleResize = useCallback(() => {
+    if (chartInstance.current) {
+      chartInstance.current.resize();
+    }
   }, []);
+
+  // 组件挂载和更新时的处理
+  useEffect(() => {
+    initOrUpdateChart();
+
+    // 添加resize监听
+    window.addEventListener('resize', handleResize);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      // 只在组件真正卸载时才销毁实例
+      if (chartInstance.current) {
+        console.log('Disposing chart instance');
+        chartInstance.current.dispose();
+        chartInstance.current = null;
+      }
+    };
+  }, [initOrUpdateChart, handleResize]);
 
   const generateChartOption = (config: ChartConfig) => {
     const baseOption = {
@@ -67,7 +84,11 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ chartConfig }) => {
           xAxis: {
             type: 'category',
             data: config.data.map(item => item[config.x_axis!]),
-            axisLabel: { color: '#666' }
+            axisLabel: { 
+              color: '#666',
+              rotate: 45,
+              interval: 'auto'
+            }
           },
           yAxis: {
             type: 'value',
@@ -102,7 +123,11 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ chartConfig }) => {
           xAxis: {
             type: 'category',
             data: config.data.map(item => item[config.x_axis!]),
-            axisLabel: { color: '#666' }
+            axisLabel: { 
+              color: '#666',
+              rotate: 45,
+              interval: 'auto'
+            }
           },
           yAxis: {
             type: 'value',
@@ -117,7 +142,8 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ chartConfig }) => {
                 { offset: 1, color: '#764ba2' }
               ]),
               borderRadius: [4, 4, 0, 0]
-            }
+            },
+            barWidth: '60%'
           }]
         };
 
@@ -207,10 +233,13 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ chartConfig }) => {
   return (
     <div 
       ref={chartRef} 
-      className="w-full h-80 bg-gray-50 rounded-lg"
-      style={{ minHeight: '320px' }}
+      className="w-full h-80 bg-white rounded-lg shadow-inner"
+      style={{ 
+        minHeight: '320px',
+        padding: '20px'
+      }}
     />
   );
 };
 
-export default ChartDisplay; 
+export default React.memo(ChartDisplay); 

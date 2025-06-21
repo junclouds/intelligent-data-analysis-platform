@@ -98,7 +98,12 @@ async def analyze_data(
             "analysis_id": analysis_id,
             "question": request.question,
             "query_type": query_analysis.get("query_type"),
-            "chart_config": chart_data,
+            "chart_config": {
+                "chart_type": chart_data.get("chart_type", "bar"),  # 使用数据处理器返回的图表类型
+                "data": chart_data.get("data", []),
+                "x_axis": chart_data.get("x_axis"),
+                "y_axis": chart_data.get("y_axis")
+            },
             "insights": insights,
             "reasoning": query_analysis.get("reasoning", ""),
             "created_at": "2025-01-19T00:00:00"  # 模拟时间

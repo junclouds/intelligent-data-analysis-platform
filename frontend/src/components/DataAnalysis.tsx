@@ -68,8 +68,11 @@ const DataAnalysis: React.FC<DataAnalysisProps> = ({ dataset }) => {
         dataset_id: dataset.id,
         question: question.trim()
       });
+      console.log('Analysis result:', result);
+      console.log('Chart config:', result.chart_config);
       setAnalysisResult(result);
     } catch (err: any) {
+      console.error('Analysis error:', err);
       setError(err.response?.data?.detail || '分析失败，请重试');
     } finally {
       setIsAnalyzing(false);
